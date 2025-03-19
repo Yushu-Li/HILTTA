@@ -1,0 +1,6 @@
+/output/*
+/.empty
+/ckpt/*
+**/__pycache__
+/data/*
+/run_exp.sh
