@@ -147,26 +147,25 @@ def hiltta(cfg,
 
                     saved_model.append(copy.deepcopy(model))
 
-                img_test = imgs.to(device)
-                labels = labels.long().to(device)
+            img_test = imgs.to(device)
+            labels = labels.long().to(device)
 
 
 
 
-                best_model_index, select_queue = active_model_selection(cfg, model, img_test, saved_model, anchor_model, labeled_index, unlabeled_index, active_pool=active_pool, score_queue= model.select_queue)
+            best_model_index, select_queue = active_model_selection(cfg, model, img_test, saved_model, anchor_model, labeled_index, unlabeled_index, active_pool=active_pool, score_queue= model.select_queue)
+            
+            if cfg.MODEL.ADAPTATION == 'rmt' or cfg.MODEL.ADAPTATION == 'sar':
+                for modele, model_state in zip(model.models, saved_model[best_model_index][0]):
+                    modele.load_state_dict(model_state, strict=True)
+                model.optimizer.load_state_dict(saved_model[best_model_index][1])
+            else:
 
-                
-                if cfg.MODEL.ADAPTATION == 'rmt' or cfg.MODEL.ADAPTATION == 'sar':
-                    for modele, model_state in zip(model.models, saved_model[best_model_index][0]):
-                        modele.load_state_dict(model_state, strict=True)
-                    model.optimizer.load_state_dict(saved_model[best_model_index][1])
-                else:
+                model = copy.deepcopy(saved_model[best_model_index])
 
-                    model = copy.deepcopy(saved_model[best_model_index])
+            model.select_queue = select_queue
 
-                model.select_queue = select_queue
-
-                supervised_training(model, img_test, labels, labeled_index, method=cfg.MODEL.ADAPTATION)
+            supervised_training(model, img_test, labels, labeled_index, method=cfg.MODEL.ADAPTATION)
 
             
 
